@@ -3,18 +3,19 @@ package routers
 import (
 	"net/http"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 
 	_ "github.com/EDDYCJY/go-gin-example/docs"
-	"github.com/swaggo/gin-swagger"
+	"github.com/EDDYCJY/go-gin-example/middleware"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"github.com/swaggo/gin-swagger/swaggerFiles"
 
-	"github.com/EDDYCJY/go-gin-example/middleware/jwt"
 	"github.com/EDDYCJY/go-gin-example/pkg/export"
 	"github.com/EDDYCJY/go-gin-example/pkg/qrcode"
 	"github.com/EDDYCJY/go-gin-example/pkg/upload"
 	"github.com/EDDYCJY/go-gin-example/routers/api"
-	"github.com/EDDYCJY/go-gin-example/routers/api/v1"
+	v1 "github.com/EDDYCJY/go-gin-example/routers/api/v1"
 )
 
 // InitRouter initialize routing information
@@ -22,6 +23,10 @@ func InitRouter() *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	r.Use(cors.New(config))
 
 	r.StaticFS("/export", http.Dir(export.GetExcelFullPath()))
 	r.StaticFS("/upload/images", http.Dir(upload.GetImageFullPath()))
@@ -32,8 +37,13 @@ func InitRouter() *gin.Engine {
 	r.POST("/upload", api.UploadImage)
 
 	apiv1 := r.Group("/api/v1")
-	apiv1.Use(jwt.JWT())
+	apiv1.Use()
 	{
+		apiv1.GET("/newalarms", middleware.Cors(), v1.GetNewAlarms)
+		apiv1.GET("/alarmtypestat", middleware.Cors(), v1.GetAlarmTypeStat)
+		apiv1.GET("/companystat", middleware.Cors(), v1.GetCompanyStat)
+		apiv1.GET("/captainstat", middleware.Cors(), v1.GetCaptainStat)
+
 		//获取标签列表
 		apiv1.GET("/tags", v1.GetTags)
 		//新建标签
